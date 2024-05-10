@@ -2826,7 +2826,6 @@ static void _find_call_arguments(GDScriptParser::CompletionContext &p_context, c
 						}
 						String name = s.get_slice("/", 1);
 						ScriptLanguage::CodeCompletionOption option("/root/" + name, ScriptLanguage::CODE_COMPLETION_KIND_NODE_PATH);
-						option.insert_text = option.display.quote(quote_style);
 						r_result.insert(option.display, option);
 					}
 				}
@@ -2842,7 +2841,6 @@ static void _find_call_arguments(GDScriptParser::CompletionContext &p_context, c
 						}
 						String name = s.get_slice("/", 1);
 						ScriptLanguage::CodeCompletionOption option(name, ScriptLanguage::CODE_COMPLETION_KIND_CONSTANT);
-						option.insert_text = option.display.quote(quote_style);
 						r_result.insert(option.display, option);
 					}
 				}
@@ -3408,7 +3406,7 @@ static void _find_call_arguments(GDScriptParser::CompletionContext &p_context, c
 					// Get autoloads.
 					for (const KeyValue<StringName, ProjectSettings::AutoloadInfo> &E : ProjectSettings::get_singleton()->get_autoload_list()) {
 						String path = "/root/" + E.key;
-						ScriptLanguage::CodeCompletionOption option(path.quote(quote_style), ScriptLanguage::CODE_COMPLETION_KIND_NODE_PATH);
+						ScriptLanguage::CodeCompletionOption option(path, ScriptLanguage::CODE_COMPLETION_KIND_NODE_PATH);
 						options.insert(option.display, option);
 					}
 				}
