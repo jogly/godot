@@ -922,7 +922,7 @@ static void _find_annotation_arguments(const GDScriptParser::AnnotationNode *p_a
 			static const char *options[7] = { "call_local", "call_remote", "any_peer", "authority", "reliable", "unreliable", "unreliable_ordered" };
 			for (int i = 0; i < 7; i++) {
 				ScriptLanguage::CodeCompletionOption option(options[i], ScriptLanguage::CODE_COMPLETION_KIND_PLAIN_TEXT);
-				option.insert_text = option.display.quote(p_quote_style);
+				option.insert_text = option.display;
 				r_result.insert(option.display, option);
 			}
 		}
