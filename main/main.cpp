@@ -2686,9 +2686,18 @@ Error Main::setup2() {
 		Color boot_bg_color = GLOBAL_DEF_BASIC("application/boot_splash/bg_color", boot_splash_bg_color);
 		DisplayServer::set_early_window_clear_color_override(true, boot_bg_color);
 
+		DisplayServer::Context context;
+		if (editor) {
+			context = DisplayServer::CONTEXT_EDITOR;
+		} else if (project_manager) {
+			context = DisplayServer::CONTEXT_PROJECTMAN;
+		} else {
+			context = DisplayServer::CONTEXT_ENGINE;
+		}
+
 		// rendering_driver now held in static global String in main and initialized in setup()
 		Error err;
-		display_server = DisplayServer::create(display_driver_idx, rendering_driver, window_mode, window_vsync_mode, window_flags, window_position, window_size, init_screen, err);
+		display_server = DisplayServer::create(display_driver_idx, rendering_driver, window_mode, window_vsync_mode, window_flags, window_position, window_size, init_screen, context, err);
 		if (err != OK || display_server == nullptr) {
 			// We can't use this display server, try other ones as fallback.
 			// Skip headless (always last registered) because that's not what users
@@ -2697,7 +2706,7 @@ Error Main::setup2() {
 				if (i == display_driver_idx) {
 					continue; // Don't try the same twice.
 				}
-				display_server = DisplayServer::create(i, rendering_driver, window_mode, window_vsync_mode, window_flags, window_position, window_size, init_screen, err);
+				display_server = DisplayServer::create(i, rendering_driver, window_mode, window_vsync_mode, window_flags, window_position, window_size, init_screen, context, err);
 				if (err == OK && display_server != nullptr) {
 					break;
 				}
@@ -2832,8 +2841,10 @@ Error Main::setup2() {
 
 	OS::get_singleton()->benchmark_end_measure("Startup", "Servers");
 
+#ifndef WEB_ENABLED
 	// Add a blank line for readability.
 	Engine::get_singleton()->print_header("");
+#endif // WEB_ENABLED
 
 	register_core_singletons();
 
@@ -3807,16 +3818,12 @@ int Main::start() {
 						ERR_PRINT("Failed to load scene");
 					}
 				}
-				DisplayServer::get_singleton()->set_context(DisplayServer::CONTEXT_EDITOR);
 				if (!debug_server_uri.is_empty()) {
 					EditorDebuggerNode::get_singleton()->start(debug_server_uri);
 					EditorDebuggerNode::get_singleton()->set_keep_open(true);
 				}
 			}
 #endif
-			if (!editor) {
-				DisplayServer::get_singleton()->set_context(DisplayServer::CONTEXT_ENGINE);
-			}
 		}
 
 		if (!project_manager && !editor) { // game
@@ -3874,7 +3881,6 @@ int Main::start() {
 			ProgressDialog *progress_dialog = memnew(ProgressDialog);
 			pmanager->add_child(progress_dialog);
 			sml->get_root()->add_child(pmanager);
-			DisplayServer::get_singleton()->set_context(DisplayServer::CONTEXT_PROJECTMAN);
 			OS::get_singleton()->benchmark_end_measure("Startup", "Project Manager");
 		}
 
@@ -4175,6 +4181,12 @@ void Main::cleanup(bool p_force) {
 	if (!p_force) {
 		ERR_FAIL_COND(!_start_success);
 	}
+
+#ifdef DEBUG_ENABLED
+	if (input) {
+		input->flush_frame_parsed_events();
+	}
+#endif
 
 	for (int i = 0; i < TextServerManager::get_singleton()->get_interface_count(); i++) {
 		TextServerManager::get_singleton()->get_interface(i)->cleanup();
